@@ -1,0 +1,7 @@
+[package]
+name = "rust_day-02"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]

@@ -1,0 +1,1 @@
+/home/ducky/projects/advent-of-code/2023/rust/day-01/target/debug/rust_day-01: /home/ducky/projects/advent-of-code/2023/rust/day-01/src/main.rs /home/ducky/projects/advent-of-code/2023/rust/day-01/src/part1.rs /home/ducky/projects/advent-of-code/2023/rust/day-01/src/part2.rs
