@@ -2,13 +2,13 @@ use std::collections::HashMap;
 
 pub fn solve(input: &str) -> usize {
     let mut sum = 0;
+    let delimiters = [',', ';'];
     let cube_counts: HashMap<&str, usize> =
         HashMap::from([("red", 12), ("blue", 14), ("green", 13)]);
     for line in input.lines() {
         if let Some((string_game, string_sets)) = line.split_once(":") {
             if let Some((_, game_number)) = string_game.split_once(" ") {
                 let mut game_possible = true;
-                let delimiters = [',', ';'];
                 for cubes in string_sets.split(|c| delimiters.contains(&c)) {
                     if let Some((count, cube_color)) = cubes.trim().split_once(" ") {
                         println!("{:?}:{:?}", count, cube_color);

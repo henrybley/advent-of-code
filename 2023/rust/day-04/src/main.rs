@@ -6,7 +6,7 @@ mod part2;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
-    let input = fs::read_to_string("../../problems/day-{{DAY_PADDED}}/input.txt")
+    let input = fs::read_to_string("../../problems/day-04/input.txt")
         .expect("Failed to read input file");
     
     let part = if args.len() > 1 {
