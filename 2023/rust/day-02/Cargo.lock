@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "rust_day-02"
+name = "rust_2023_day-02"
 version = "0.1.0"

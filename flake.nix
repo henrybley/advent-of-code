@@ -122,7 +122,7 @@
             echo "Input downloaded successfully"
           fi
 
-          
+
 
           # Language-specific post-processing
           case $LANG in
@@ -160,11 +160,15 @@
         runTest = pkgs.writeShellScriptBin "aoc-test" ''
           LANG=$1
           DAY=$2
-          YEAR=''${3:-2025}
+          PART=$3
+          YEAR=''${4:-2025}
+          echo "PART: $PART"
 
-          if [ -z "$LANG" ] || [ -z "$DAY" ]; then
-            echo "Usage: aoc-run <rust|java> <day> [year]"
-            echo "Example: aoc-run rust 1"
+          if [ -z "$LANG" ] || [ -z "$DAY" ] || [ -z "$PART" ]; then
+            echo "Usage: aoc-test <rust|java> <day> <part> [year]"
+            echo "Examples:"
+            echo "aoc-test rust 1 part2"
+            echo "aoc-test rust 1 part1 2023"
             exit 1
           fi
 
@@ -180,11 +184,11 @@
 
           case $LANG in
             rust)
-              echo "Running Rust solution for day $DAY..."
-              ${pkgs.cargo}/bin/cargo test
+              echo "Running Rust test for day $DAY..."
+              ${pkgs.cargo}/bin/cargo test test_$PART
               ;;
             java)
-              echo "Running Java solution for day $DAY..."
+              echo "Running Java test for day $DAY..."
               # Compile if needed
               if [ ! -f "Solution.class" ] || [ "Solution.java" -nt "Solution.class" ]; then
                 ${pkgs.jdk}/bin/javac Solution.java
@@ -239,49 +243,6 @@
           esac
         '';
 
-        # Script to run in release mode
-        runRelease = pkgs.writeShellScriptBin "aoc-run-release" ''
-          LANG=$1
-          DAY=$2
-          YEAR=''${3:-2025}
-
-          if [ -z "$LANG" ] || [ -z "$DAY" ]; then
-            echo "Usage: aoc-run-release <rust|java> <day> [year]"
-            echo "Example: aoc-run-release rust 1"
-            exit 1
-          fi
-
-          DAY_PADDED=$(printf "%02d" $DAY)
-          DIR="$YEAR/$LANG/day-$DAY_PADDED"
-
-          if [ ! -d "$DIR" ]; then
-            echo "Error: Directory $DIR does not exist"
-            exit 1
-          fi
-
-          cd "$DIR"
-
-          case $LANG in
-            rust)
-              echo "Running Rust solution (release) for day $DAY..."
-              ${pkgs.cargo}/bin/cargo run --release --quiet
-              ;;
-            java)
-              echo "Running Java solution for day $DAY..."
-              # Compile with optimizations if needed
-              if [ ! -f "Solution.class" ] || [ "Solution.java" -nt "Solution.class" ]; then
-                ${pkgs.jdk}/bin/javac -O Solution.java
-              fi
-              ${pkgs.jdk}/bin/java Solution
-              ;;
-            *)
-              echo "Unknown language: $LANG"
-              exit 1
-              ;;
-          esac
-        '';
-
-        # Script to benchmark a solution
         benchSolution = pkgs.writeShellScriptBin "aoc-bench" ''
           LANG=$1
           DAY=$2
@@ -311,7 +272,7 @@
             rust)
               echo "Building Rust solution..."
               ${pkgs.cargo}/bin/cargo build --release --quiet
-              CMD="./target/release/day-$DAY_PADDED"
+              CMD="./target/release/rust_$YEAR""_day-$DAY_PADDED"
               ;;
             java)
               echo "Compiling Java solution..."
@@ -325,33 +286,21 @@
           esac
 
           echo ""
-          echo "Benchmarking $LANG Day $DAY..."
+          echo "Benchmarking $LANG Day $DAY Part One..."
           ${pkgs.hyperfine}/bin/hyperfine \
             --warmup $WARMUP \
             --runs $RUNS \
             --style full \
-            "$CMD"
-        '';
+            "$CMD part1"
 
-        # Script to benchmark all solutions
-        benchAll = pkgs.writeShellScriptBin "aoc-bench-all" ''
-          YEAR=''${1:-2025}
-
-          echo "Benchmarking all solutions for $YEAR..."
           echo ""
+          echo "Benchmarking $LANG Day $DAY Part Two..."
+          ${pkgs.hyperfine}/bin/hyperfine \
+            --warmup $WARMUP \
+            --runs $RUNS \
+            --style full \
+            "$CMD part2"
 
-          for lang in rust java; do
-            if [ -d "$YEAR/$lang" ]; then
-              for dir in $YEAR/$lang/day-*; do
-                if [ -d "$dir" ]; then
-                  day=$(basename "$dir" | sed 's/day-0*//')
-                  echo "=== $lang Day $day ==="
-                  aoc-bench $lang $day $YEAR 2>/dev/null || echo "Benchmark failed or not available"
-                  echo ""
-                fi
-              done
-            fi
-          done
         '';
 
       in
@@ -374,22 +323,18 @@
             mkDay
             runTest
             runSolution
-            runRelease
             benchSolution
-            benchAll
           ];
 
           shellHook = ''
-            echo "Advent of Code 2025 Environment"
+            echo "Advent of Code Environment"
             echo "================================"
             echo ""
             echo "Commands:"
-            echo "  aoc-new-day <lang> <day>       - Create new solution from template"
-            echo "  aoc-test <lang> <day>           - Run solution (debug/dev mode)"
+            echo "  aoc-new-day <lang> <day>            - Create new solution from template"
+            echo "  aoc-test <lang> <day> <part> [year] - Run test"
             echo "  aoc-run <lang> <day>           - Run solution (debug/dev mode)"
-            echo "  aoc-run-release <lang> <day>   - Run solution (optimized)"
             echo "  aoc-bench <lang> <day>         - Benchmark a solution"
-            echo "  aoc-bench-all                  - Benchmark all solutions"
             echo ""
             echo "Examples:"
             echo "  aoc-new-day rust 1"
